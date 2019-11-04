@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Vue-js | Django | Crud App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A simple crud app made with the vue js and django">
+    <meta name="keywords" content="vuejs, django, crudapp, restapi">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.18/vue.min.js"></script>
+
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light navbar-dark bg-dark">
+        <!-- <a class="navbar-brand" href="#">Navbar</a> -->
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                                  <span class="navbar-toggler-icon"></span>
+                                </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+
+                <li class="nav-item">
+                    <a class="nav-link" href="/main">Home</a>
+                </li>
+
+            </ul>
+        </div>
+    </nav>
+    {% if user.is_authenticated %}
+    <div id="app">
+        <div class="container">
+            <div class="row">
+                <h1>Listado de Categorias
+                    <button class="btn btn-success" @click="abrirVentanaModal('categoria', 'registrar')">Agregar categoria</button>
+                </h1>
+                <table class="table ">
+                    <thead>
+                        <tr>
+                            <th scope="col ">#</th>
+                            <th scope="col ">nombre</th>
+                            <th scope="col ">descripcio</th>
+                            <th scope="col ">opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="categoria in categorias ">
+                            <th scope="row " v-text="categoria.id "></th>
+                            <td v-text="categoria.nombre "></td>
+                            <td v-text="categoria.descripcion "></td>
+                            <td>
+                                <button class="btn btn-info " v-on:click="abrirVentanaModal('categoria', 'actualizar', categoria) ">Editar</button>
+                                <button class="btn btn-danger " v-on:click="deletecategoria(categoria.id) ">Eliminar</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="modal fade" tabindex="-1" :class="{'mostrar': modal}" role="dialog" aria-labelledby="myModalLabel" style="display: none;" aria-hidden="true">
+                    <div class="modal-dialog modal-primary modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title" v-text="TituloModal"></h4>
+                                <button type="button" class="close" @click="cerrarModal()" aria-label="Close">
+                                      <span aria-hidden="true">×</span>
+                                    </button>
+                            </div>
+                            <div class="modal-body">
+                                <form action="" method="post" enctype="multipart/form-data" class="form-horizontal">
+                                    <div class="form-group row">
+                                        <label class="col-md-3 form-control-label" for="text-input">Nombre</label>
+                                        <div class="col-md-9">
+                                            <input type="text" v-model="nombre" class="form-control" placeholder="Nombre del categoria">
+                                            <span class="help-block">(*) Ingrese el nombre del categoria</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-md-3 form-control-label" for="email-input">Descripcion</label>
+                                        <div class="col-md-9">
+                                            <input type="text" v-model="descripcion" class="form-control" placeholder="Descripcion">
+                                        </div>
+                                    </div>
+                                    <div v-show="errorcategoria" class="form-group row div-error">
+                                        <div class="text-center text-error">
+                                            <div v-for="error in errorArraycategoria" :key="error" v-text="error">
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" @click="cerrarModal()">Cerrar</button>
+                                <button type="button" class="btn btn-primary" v-if="tipoAccionBoton==1" @click="addcategoria()">Guardar</button>
+                                <button type="button" class="btn btn-primary" v-if="tipoAccionBoton==2" @click="updatecategoria()">Actualizar</button>
+                            </div>
+                        </div>
+                        <!-- /.modal-content -->
+                    </div>
+                    <!-- /.modal-dialog -->
+                </div>
+                <!-- End of article modal -->
+            </div>
+        </div>
+        <div class="loading " v-if="loading===true ">Loading&#8230;</div>
+    </div>
+    {% endif %}
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js " integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN " crossorigin="anonymous "></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js " integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q " crossorigin="anonymous "></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js " integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl " crossorigin="anonymous "></script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.13/dist/vue.js "></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.3.5 "></script>
+    <!-- codigo vue -->
+    <script type="text/javascript ">
+        Vue.http.headers.common['X-CSRFToken'] = "{{ csrf_token }}";
+        new Vue({
+            el: '#app',
+            // delimiters: ['${', '}'],
+            data: {
+                categorias: [],
+                categoria_id: 0,
+                nombre: "",
+                descripcion: "",
+                TituloModal: "",
+                errorcategoria: "",
+                errorArraycategoria: [],
+                tipoAccionBoton: 0,
+                nit: " ",
+                loading: false,
+                modal: 0,
+                currentcategoria: {},
+                message: null,
+            },
+            mounted: function() {
+                this.getcategorias();
+            },
+            methods: {
+                getcategorias: function() {
+                    this.loading = true;
+                    this.$http.get('/api/categoria/')
+                        .then((response) => {
+                            this.categorias = response.data;
+                            // console.log(this.categorias);
+                            this.loading = false;
+                        })
+                        .catch((err) => {
+                            this.loading = false;
+                            console.log(err);
+                        })
+                },
+                addcategoria: function() {
+                    if (this.validiarcategoria()) {
+                        return;
+                    }
+                    this.loading = true;
+                    this.$http.post('/api/categoria/', {
+                            'nombre': this.nombre,
+                            'descripcion': this.descripcion,
+                        }).then((response) => {
+                            this.loading = false;
+                            this.getcategorias();
+                            this.cerrarModal();
+                        })
+                        .catch((err) => {
+                            this.loading = false;
+                            console.log(err);
+                        })
+                },
+                updatecategoria: function() {
+                    if (this.validiarcategoria()) {
+                        return;
+                    }
+                    this.loading = true;
+                    this.$http.put(`/api/categoria/${this.categoria_id}/`, {
+                            // 'id': this.categoria_id,
+                            'nombre': this.nombre,
+                            'descripcion': this.descripcion,
+
+                        }).then((response) => {
+                            this.loading = false;
+                            this.currentcategoria = response.data;
+                            this.getcategorias();
+                            this.cerrarModal();
+                        })
+                        .catch((err) => {
+                            this.loading = false;
+                            console.log(err);
+                        })
+                },
+                deletecategoria: function(id) {
+                    this.loading = true;
+                    this.$http.delete(`/api/categoria/${id}/`)
+                        .then((response) => {
+                            this.loading = false;
+                            this.getcategorias();
+                        })
+                        .catch((err) => {
+                            this.loading = false;
+                            console.log(err);
+                        })
+                },
+                validiarcategoria: function() {
+                    this.errorcategoria = 0;
+                    this.errorArraycategoria = [];
+                    if (!this.nombre) this.errorArraycategoria.push("El nombre del categoria no puede estar vacío");
+
+                    if (this.errorArraycategoria.length) this.errorcategoria = 1;
+
+                    return this.errorcategoria;
+                },
+                cerrarModal() {
+                    this.modal = 0;
+                    this.nombre = " ";
+                    this.descripcion = " ";
+                    this.nit = " ";
+                    this.errorcategoria = 0;
+                },
+                abrirVentanaModal(modelo, accion, data = []) {
+                    //modelo nombre del modelo
+                    //accion registrar o actualizar
+                    //data el objeto correspondiente a una fila de la tabla
+                    switch (modelo) {
+                        case "categoria":
+                            {
+                                switch (accion) {
+                                    case "registrar":
+                                        {
+                                            this.modal = 1;
+                                            this.TituloModal = 'Registrar categoria';
+                                            this.nombre = '';
+                                            this.nit = 0;
+                                            this.descripcion = '';
+                                            this.tipoAccionBoton = 1;
+                                            break;
+                                        }
+                                    case "actualizar":
+                                        {
+                                            // console.log(data);
+                                            this.modal = 1;
+                                            this.TituloModal = 'Actualizar categoria';
+                                            this.tipoAccionBoton = 2;
+                                            this.nombre = data["nombre"];
+                                            this.categoria_id = data["id"];
+                                            this.descripcion = data["descripcion"];
+                                            this.nit = data["nit"];
+                                            // this.descripcion = data["descripcion"];
+                                            break;
+                                        }
+                                }
+                            }
+                    }
+                }
+            }
+        });
+    </script>
+
+</body>
+
+</html>
+
+<style>
+    .modal-content {
+        width: 100% !important;
+        position: absolute !important;
+    }
+    
+    .mostrar {
+        display: list-item !important;
+        opacity: 1 !important;
+        position: absolute !important;
+        background-color: #3c29297a !important;
+    }
+    
+    .div-error {
+        display: flex;
+        justify-content: center;
+    }
+    
+    .text-error {
+        color: red !important;
+        font-weight: bold;
+    }
+</style>

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Vue-js | Django | Crud App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A simple crud app made with the vue js and django">
+    <meta name="keywords" content="vuejs, django, crudapp, restapi">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.18/vue.min.js"></script>
+
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light navbar-dark bg-dark">
+        <!-- <a class="navbar-brand" href="#">Navbar</a> -->
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                                  <span class="navbar-toggler-icon"></span>
+                                </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+
+                <li class="nav-item">
+                    <a class="nav-link" href="/main">Home</a>
+                </li>
+
+            </ul>
+        </div>
+    </nav>
+    {% if user.is_authenticated %}
+    <div id="app">
+        <template v-if="listado==1">
+        <div class="container">
+                <div class="row">
+                    <h1>Listado de estilos
+                        <button class="btn btn-success" @click="abrirVentanaModal('ropa', 'registrar')">Agregar Estilo</button>
+                    </h1>
+                    <table class="table ">
+                        <thead>
+                            <tr>
+                                <th scope="col ">#</th>
+                                <th scope="col ">Nombre</th>
+                                <th scope="col ">Precio</th>
+                                <th scope="col ">Tamaño</th>
+                                <th scope="col ">Color</th>
+                                <th scope="col ">Tipo</th>
+                                <th scope="col ">Imagen</th>
+                                <th scope="col ">Opciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="ropa in ropas ">
+                                <th scope="row " v-text="ropa.id "></th>
+                                <td v-text="ropa.nombre "></td>
+                                <td v-text="ropa.precio "></td>
+                                <td v-text="ropa.tamano "></td>
+                                <td v-text="ropa.color "></td>
+                                <td v-text="ropa.tipo "></td>
+                                <!-- v-bind:href="person.url" -->
+                                <td><img v-bind:src="ropa.imagen.url" /></td>
+                                <td>
+                                    <!-- <button class="btn btn-info " v-on:click="abrirVentanaModal('ropa', 'actualizar', ropa) ">Editar</button> -->
+                                    <button class="btn btn-danger " v-on:click="deleteropa(ropa.id) ">Eliminar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div> 
+        </template>
+        <!-- Fin visualizar -->
+        <!-- agregar -->
+        <template v-else-if="listado==0">
+                <div class="card-body">
+                    <div class="form-group row border">
+                        <div class="col-md-4">
+                                <label class="col-md-5 form-control-label" for="text-input">Seleccione imagen(*)</label>
+                                <input type="file" class="form-control" placeholder="Foto de perfil" name="image" @change="getImage" accept="image/*">
+
+                        </div>
+                         <div class="col-md-2">
+                                <label class="col-md-9 form-control-label" for="text-input">Nombre(*)</label>
+                                <input type="text"  v-model="nombre" class="form-control" placeholder="Ingres nombre de prenda">
+                        </div>
+                        
+                         <div class="col-md-2">
+                                <label class="col-md-9 form-control-label" for="text-input">Precio(*)</label>
+                                <input type="text"  v-model="precio" class="form-control" placeholder="Ingrese precio">
+                        </div>
+                        <div class="col-md-3">
+                                <label class="col-md-5 form-control-label" for="text-input">Color(*)</label>
+                                <select v-model="color" class="form-control">
+                                        <option value="Red">Rojo</option>
+                                        <option value="Blue">Azul</option>
+                                        <option value="Yellow">Amarillo</option>
+                                     
+                                </select>
+                        </div>
+                        <div class="col-md-3">
+                                <label class="col-md-5 form-control-label" for="text-input">Tamaño(*)</label>
+                                <select v-model="tamano" class="form-control">
+                                        <option value="S">Pequeña</option>
+                                        <option value="M">Mediana</option>
+                                        <option value="L">Grande</option>
+                                </select>
+                                <br>
+                        <button @click="abrirModal()" class="btn btn-primary">Agregar diseño</button>
+                        </div>
+                        <div class="col-md-3">
+                                <label>Categoria<span style="color:red;" v-show="idcategoria==0">(Ingrese)</span></label>
+                                <select class="form-control" v-model="idcategoria">
+                                    <option value="0" disabled>Seleccione</option>
+                                    <option v-for="categoria in arrayCategoria" :key="categoria.id" :value="categoria.id" v-text="categoria.nombre"></option>
+                                </select>
+                        </div>
+                        <div class="col-md-12">
+                            <div v-show="errorDiseno" class="form-group row div-error">
+                                <div class="text-center text-error">
+                                    <div v-for="error in errorMensajeDiseno" :key="error" v-text="error">
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row border">
+                        <div class="table-responsive col-md-12">
+                            <table class="table table-bordered table-striped table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Opciones</th>
+                                        <th>Nombre</th>
+                                        <th>Cantidad</th>
+                                        <th>Color</th>
+                                        <th>Posicion</th>
+                                    </tr>
+                                </thead>
+                                <tbody v-if="arrayDetalle.length">
+                                    <tr v-for="(detalle,index) in arrayDetalle" :key="detalle.id">
+                                        <td>
+                                            <button @click="eliminarDetalle(index)" type="button" class="btn btn-danger btn-sm">
+                                                <i class="icon-close"></i>
+                                            </button>
+                                        </td>
+                                        <td v-text="detalle.nombre"></td>
+                                        <td v-text="detalle.cantidad"></td>
+                                        <td v-text="detalle.color"></td>
+                                        <td v-text="detalle.posicion"></td>
+                                    </tr>
+                                </tbody>
+                                <tbody v-else>
+                                    <tr>
+                                        <td colspan="7">
+                                            NO hay diseños agregados
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-12">
+                            <button type="button" @click="cerrarVentanaModal()" class="btn btn-secondary">Cerrar</button>
+                            <button type="button" v-if="tipoAccion==1" class="btn btn-primary" @click="addEstilo()">Guardar</button>
+                            <button type="button"  v-if="tipoAccion==2"class="btn btn-primary" @click="updateropa()">Actualizar</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        <div class="modal fade" tabindex="-1" :class="{'mostrar': modal}" role="dialog" aria-labelledby="myModalLabel" style="display: none;" aria-hidden="true">
+            <div class="modal-dialog modal-primary modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" v-text="TituloModal"></h4>
+                        <button type="button" class="close" @click="cerrarModal()" aria-label="Close">
+                                      <span aria-hidden="true">×</span>
+                                    </button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="" method="post" enctype="multipart/form-data" class="form-horizontal">
+                            <div class="form-group row">
+                                <label class="col-md-3 form-control-label" for="text-input">Nombre</label>
+                                <div class="col-md-9">
+                                    <input type="text" v-model="nombreDiseno" class="form-control" placeholder="Nombre del ropa">
+                                    <span class="help-block">(*) Ingrese el nombre del diseño</span>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-md-3 form-control-label" for="email-input">Cantidad</label>
+                                <div class="col-md-9">
+                                    <input type="number" v-model="cantidad" class="form-control" placeholder="cantidad">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-md-3 form-control-label" for="email-input">Color</label>
+                                <div class="col-md-9">
+                                    <select v-model="color1" class="form-control">
+                                                    <option value="Red">Rojo</option>
+                                                    <option value="Blue">Azul</option>
+                                                    <option value="Yellow">Amarillo</option>
+                                            </select>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-md-3 form-control-label" for="email-input">posicion</label>
+                                <div class="col-md-9">
+                                    <select v-model="posicion" class="form-control">
+                                            <option value="DelSuperiorD">DelSuperiorD</option>                    
+                                            <option value="DelSuperiorI">DelSuperiorI</option>                    
+                                            <option value="DelInferiorD">DelInferiorD</option>                    
+                                            <option value="DelInferiorI">DelInferiorI</option>                       
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div v-show="errorDiseno1" class="form-group row div-error">
+                                <div class="text-center text-error">
+                                    <div v-for="error in errorMensajeDiseno1" :key="error" v-text="error">
+
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="cerrarModal()">Cerrar</button>
+                        <button type="button" class="btn btn-primary" @click="agregarEstilo()">Agregar</button>
+
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+            <!-- /.modal-dialog -->
+        </div>
+        <!-- End of article modal -->
+
+        <div class="loading " v-if="loading===true ">Loading&#8230;</div>
+    </div>
+    {% endif %}
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js " integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN " crossorigin="anonymous "></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js " integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q " crossorigin="anonymous "></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js " integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl " crossorigin="anonymous "></script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.13/dist/vue.js "></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.3.5 "></script>
+    <!-- codigo vue -->
+    <script type="text/javascript ">
+        Vue.http.headers.common['X-CSRFToken'] = "{{ csrf_token }}";
+        new Vue({
+            el: '#app',
+            // delimiters: ['${', '}'],
+            data: {
+                ropas: [],
+                listado: 1,
+                errorDiseno: 0,
+                id_estilos: 0,
+                errorMensajeDiseno: [],
+                errorDiseno1: 0,
+                errorMensajeDiseno1: [],
+                idcategoria: 0,
+                arrayCategoria: [],
+                nombreDiseno: "",
+                cantidad: 0,
+                color1: '',
+                posicion: 'DelSuperiorI',
+                precio: 0,
+                tamano: 'S',
+                imagen: null,
+                color: '',
+                Tipo: 'S',
+                ropa_id: 0,
+                tipoAccion: 0,
+                arrayDetalle: [],
+                nombre: "",
+                descripcion: "",
+                TituloModal: "",
+                errorropa: "",
+                errorArrayropa: [],
+                tipoAccionBoton: 0,
+                nit: " ",
+                loading: false,
+                modal: 0,
+                currentropa: {},
+                message: null,
+            },
+            mounted: function() {
+                this.getropas();
+            },
+            methods: {
+                getImage(event) {
+                    //Asignamos la imagen a  nuestra data
+                    this.imagen = event.target.files[0];
+                },
+                getCategoria() {
+                    this.loading = true;
+                    this.$http.get('/api/categoria/')
+                        .then((response) => {
+                            this.arrayCategoria = response.data;
+                            // console.log(this.ropas);
+                            this.loading = false;
+                        })
+                        .catch((err) => {
+                            this.loading = false;
+                            console.log(err);
+                        })
+                },
+                getropas: function() {
+                    this.loading = true;
+                    this.$http.get('/api/ropa/')
+                        .then((response) => {
+                            this.ropas = response.data;
+                            console.log(this.ropas);
+                            this.loading = false;
+                        })
+                        .catch((err) => {
+                            this.loading = false;
+                            console.log(err);
+                        })
+                },
+                validarDiseno() {
+                    this.errorDiseno = 0;
+                    this.errorMensajeDiseno = [];
+
+                    if (this.idcategoria == 0) this.errorMensajeDiseno.push("Seleccione una categoria");
+                    if (!this.precio) this.errorMensajeDiseno.push("Por favor ingrese un precio");
+                    if (!this.nombre) this.errorMensajeDiseno.push("Por favor ingrese una Nombre");
+                    if (this.arrayDetalle.length <= 0) this.errorMensajeDiseno.push("Ingrese Diseños");
+
+                    if (this.errorMensajeDiseno.length) this.errorDiseno = 1;
+
+                    return this.errorDiseno;
+                },
+                validar() {
+                    this.errorDiseno1 = 0;
+                    this.errorMensajeDiseno1 = [];
+
+                    if (!this.nombreDiseno) this.errorMensajeDiseno1.push("Ingresa un diseño");
+                    if (!this.cantidad) this.errorMensajeDiseno1.push("Ingresa la cantidad");
+
+                    if (this.errorMensajeDiseno1.length) this.errorDiseno1 = 1;
+
+                    return this.errorDiseno1;
+                },
+                agregarEstilo() {
+                    if (this.validar()) {
+                        return;
+                    }
+                    let me = this;
+                    me.arrayDetalle.push({
+                        'nombre': me.nombreDiseno,
+                        'color': me.color1,
+                        'cantidad': me.cantidad,
+                        'posicion': me.posicion,
+                    });
+                    this.nombreDiseno = "";
+                    this.cantidad = 0;
+                    this.posicion = "";
+                    this.modal = 0;
+                },
+                addEstilo: function() {
+                    if (this.validarDiseno()) {
+                        return;
+                    }
+                    data = new FormData();
+                    data.append('imagen', this.imagen);
+                    data.append('nombre', this.nombre);
+                    data.append('precio', this.precio);
+                    data.append('tamano', this.tamano);
+                    data.append('color', this.color);
+                    data.append('tipo', this.idcategoria);
+                    // console.log(this.arrayDetalle);
+                    this.loading = true;
+                    this.$http.post('/api/ropa/', data).then((response) => {
+                            console.log(response.data);
+                            this.loading = false;
+                            this.getropas();
+                            this.cerrarVentanaModal();
+                        })
+                        .catch((err) => {
+                            this.loading = false;
+                            console.log(err);
+                        })
+                },
+
+
+                eliminarDetalle(index, id) {
+                    let me = this;
+                    me.arrayDetalle.splice(index, 1);
+                },
+                deleteropa: function(id) {
+                    this.loading = true;
+                    this.$http.delete(`/api/ropa/${id}/`)
+                        .then((response) => {
+                            this.loading = false;
+                            this.getropas();
+                        })
+                        .catch((err) => {
+                            this.loading = false;
+                            console.log(err);
+                        })
+                },
+                validiarropa: function() {
+                    this.errorropa = 0;
+                    this.errorArrayropa = [];
+                    if (!this.nombre) this.errorArrayropa.push("El nombre del ropa no puede estar vacío");
+
+                    if (this.errorArrayropa.length) this.errorropa = 1;
+
+                    return this.errorropa;
+                },
+                cerrarModal() {
+                    this.nombre1 = " ";
+                    this.descripcion = " ";
+                    this.modal = 0;
+                    this.nit = " ";
+                    this.errorropa = 0;
+                },
+                abrirModal() {
+                    this.modal = 1;
+                    this.TituloModal = "Registrar diseño";
+                    this.cantidad = 0;
+                    this.color = "Red";
+                    this.posicion = "DelSuperiorI";
+                },
+                cerrarVentanaModal() {
+                    this.listado = 1;
+                },
+                abrirVentanaModal(modelo, accion, data = []) {
+                    this.getCategoria();
+                    //modelo nombre del modelo
+                    //accion registrar o actualizar
+                    //data el objeto correspondiente a una fila de la tabla
+                    switch (modelo) {
+                        case "ropa":
+                            {
+                                switch (accion) {
+                                    case "registrar":
+                                        {
+                                            this.nombre = '';
+                                            this.precio = 0;
+                                            this.idcategoria = 0;
+                                            this.listado = 0;
+                                            this.image = null;
+                                            this.tipoAccion = 1;
+                                            break;
+                                        }
+                                    case "actualizar":
+                                        {
+                                            this.tipoAccion = 2;
+                                            this.listado = 0;
+                                            this.image = data['imagen'];
+                                            this.id_estilos = data['id'];
+                                            this.nombre = data['nombre'];
+                                            this.precio = data['precio'];
+                                            this.color = data['color'];
+                                            this.tamano = data['tamano'];
+                                            this.idcategoria = data['tipo'];
+                                        }
+                                }
+                            }
+                    }
+                }
+            }
+        });
+    </script>
+
+</body>
+
+</html>
+
+<style>
+    .modal-content {
+        width: 100% !important;
+        position: absolute !important;
+    }
+    
+    .mostrar {
+        display: list-item !important;
+        opacity: 1 !important;
+        position: absolute !important;
+        background-color: #3c29297a !important;
+    }
+    
+    .div-error {
+        display: flex;
+        justify-content: center;
+    }
+    
+    .text-error {
+        color: red !important;
+        font-weight: bold;
+    }
+</style>

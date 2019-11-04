@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Vue-js | Django | Crud App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A simple crud app made with the vue js and django">
+    <meta name="keywords" content="vuejs, django, crudapp, restapi">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.18/vue.min.js"></script>
+
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light navbar-dark bg-dark">
+        <!-- <a class="navbar-brand" href="#">Navbar</a> -->
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                          <span class="navbar-toggler-icon"></span>
+                        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+
+                <li class="nav-item">
+                    <a class="nav-link" href="/main">Home</a>
+                </li>
+
+            </ul>
+        </div>
+    </nav>
+    {% if user.is_authenticated %}
+    <div id="app">
+        <div class="container">
+            <div class="row">
+                <h1>Listado de clientes
+                    <button class="btn btn-success" @click="abrirVentanaModal('cliente', 'registrar')">Agregar cliente</button>
+                </h1>
+                <table class="table ">
+                    <thead>
+                        <tr>
+                            <th scope="col ">#</th>
+                            <th scope="col ">nombre</th>
+                            <th scope="col ">nit</th>
+                            <th scope="col ">direccion</th>
+                            <th scope="col ">opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="cliente in clientes ">
+                            <th scope="row " v-text="cliente.id "></th>
+                            <td v-text="cliente.nombre "></td>
+                            <td v-text="cliente.nit "></td>
+                            <td v-text="cliente.direccion "></td>
+                            <td>
+                                <button class="btn btn-info " v-on:click="abrirVentanaModal('cliente', 'actualizar', cliente) ">Editar</button>
+                                <button class="btn btn-danger " v-on:click="deleteCliente(cliente.id) ">Eliminar</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="modal fade" tabindex="-1" :class="{'mostrar': modal}" role="dialog" aria-labelledby="myModalLabel" style="display: none;" aria-hidden="true">
+                    <div class="modal-dialog modal-primary modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title" v-text="TituloModal"></h4>
+                                <button type="button" class="close" @click="cerrarModal()" aria-label="Close">
+                                      <span aria-hidden="true">×</span>
+                                    </button>
+                            </div>
+                            <div class="modal-body">
+                                <form action="" method="post" enctype="multipart/form-data" class="form-horizontal">
+                                    <div class="form-group row">
+                                        <label class="col-md-3 form-control-label" for="text-input">Nombre</label>
+                                        <div class="col-md-9">
+                                            <input type="text" v-model="nombre" class="form-control" placeholder="Nombre del cliente">
+                                            <span class="help-block">(*) Ingrese el nombre del cliente</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-md-3 form-control-label" for="email-input">Direccion</label>
+                                        <div class="col-md-9">
+                                            <input type="text" v-model="direccion" class="form-control" placeholder="Direccion">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-md-3 form-control-label" for="email-input">nit</label>
+                                        <div class="col-md-9">
+                                            <input type="text" v-model="nit" class="form-control" placeholder="Nit">
+                                        </div>
+                                    </div>
+                                    <div v-show="errorCliente" class="form-group row div-error">
+                                        <div class="text-center text-error">
+                                            <div v-for="error in errorArrayCliente" :key="error" v-text="error">
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" @click="cerrarModal()">Cerrar</button>
+                                <button type="button" class="btn btn-primary" v-if="tipoAccionBoton==1" @click="addCliente()">Guardar</button>
+                                <button type="button" class="btn btn-primary" v-if="tipoAccionBoton==2" @click="updateCliente()">Actualizar</button>
+                            </div>
+                        </div>
+                        <!-- /.modal-content -->
+                    </div>
+                    <!-- /.modal-dialog -->
+                </div>
+                <!-- End of article modal -->
+            </div>
+        </div>
+        <div class="loading " v-if="loading===true ">Loading&#8230;</div>
+    </div>
+    {% endif %}
+
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js " integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN " crossorigin="anonymous "></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js " integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q " crossorigin="anonymous "></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js " integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl " crossorigin="anonymous "></script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.13/dist/vue.js "></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.3.5 "></script>
+    <!-- codigo vue -->
+    <script type="text/javascript ">
+        Vue.http.headers.common['X-CSRFToken'] = "{{ csrf_token }}";
+        new Vue({
+            el: '#app',
+            // delimiters: ['${', '}'],
+            data: {
+                clientes: [],
+                cliente_id: 0,
+                nombre: "",
+                direccion: "",
+                TituloModal: "",
+                errorCliente: "",
+                errorArrayCliente: [],
+                tipoAccionBoton: 0,
+                nit: " ",
+                loading: false,
+                modal: 0,
+                currentCliente: {},
+                message: null,
+            },
+            mounted: function() {
+                this.getClientes();
+            },
+            methods: {
+                getClientes: function() {
+                    this.loading = true;
+                    this.$http.get('/api/cliente/')
+                        .then((response) => {
+                            this.clientes = response.data;
+                            // console.log(this.clientes);
+                            this.loading = false;
+                        })
+                        .catch((err) => {
+                            this.loading = false;
+                            console.log(err);
+                        })
+                },
+                addCliente: function() {
+                    if (this.validiarCliente()) {
+                        return;
+                    }
+                    this.loading = true;
+                    this.$http.post('/api/cliente/', {
+                            'nombre': this.nombre,
+                            'direccion': this.direccion,
+                            'nit': this.nit
+                        }).then((response) => {
+                            console.log(response);
+                            this.loading = false;
+                            this.getClientes();
+                            this.cerrarModal();
+                        })
+                        .catch((err) => {
+                            this.loading = false;
+                            console.log(err);
+                        })
+                },
+                updateCliente: function() {
+                    if (this.validiarCliente()) {
+                        return;
+                    }
+                    this.loading = true;
+                    this.$http.put(`/api/cliente/${this.cliente_id}/`, {
+                            // 'id': this.cliente_id,
+                            'nombre': this.nombre,
+                            'direccion': this.direccion,
+                            'nit': this.nit
+
+                        }).then((response) => {
+                            this.loading = false;
+                            this.currentCliente = response.data;
+                            this.getClientes();
+                            this.cerrarModal();
+                        })
+                        .catch((err) => {
+                            this.loading = false;
+                            console.log(err);
+                        })
+                },
+                deleteCliente: function(id) {
+                    this.loading = true;
+                    this.$http.delete(`/api/cliente/${id}/`)
+                        .then((response) => {
+                            this.loading = false;
+                            this.getClientes();
+                        })
+                        .catch((err) => {
+                            this.loading = false;
+                            console.log(err);
+                        })
+                },
+                validiarCliente: function() {
+                    this.errorCliente = 0;
+                    this.errorArrayCliente = [];
+                    if (!this.nombre) this.errorArrayCliente.push("El nombre del cliente no puede estar vacío");
+                    if (this.errorArrayCliente.length) this.errorCliente = 1;
+
+                    return this.errorCliente;
+                },
+                cerrarModal() {
+                    this.modal = 0;
+                    this.nombre = " ";
+                    this.direccion = " ";
+                    this.nit = " ";
+                    this.errorCliente = 0;
+                },
+                abrirVentanaModal(modelo, accion, data = []) {
+                    //modelo nombre del modelo
+                    //accion registrar o actualizar
+                    //data el objeto correspondiente a una fila de la tabla
+                    switch (modelo) {
+                        case "cliente":
+                            {
+                                switch (accion) {
+                                    case "registrar":
+                                        {
+                                            this.modal = 1;
+                                            this.TituloModal = 'Registrar Cliente';
+                                            this.nombre = '';
+                                            this.nit = 0;
+                                            this.direccion = '';
+                                            this.tipoAccionBoton = 1;
+                                            break;
+                                        }
+                                    case "actualizar":
+                                        {
+                                            // console.log(data);
+                                            this.modal = 1;
+                                            this.TituloModal = 'Actualizar cliente';
+                                            this.tipoAccionBoton = 2;
+                                            this.nombre = data["nombre"];
+                                            this.cliente_id = data["id"];
+                                            this.direccion = data["direccion"];
+                                            this.nit = data["nit"];
+                                            // this.descripcion = data["descripcion"];
+                                            break;
+                                        }
+                                }
+                            }
+                    }
+                }
+            }
+        });
+    </script>
+
+</body>
+
+</html>
+
+<style>
+    .modal-content {
+        width: 100% !important;
+        position: absolute !important;
+    }
+    
+    .mostrar {
+        display: list-item !important;
+        opacity: 1 !important;
+        position: absolute !important;
+        background-color: #3c29297a !important;
+    }
+    
+    .div-error {
+        display: flex;
+        justify-content: center;
+    }
+    
+    .text-error {
+        color: red !important;
+        font-weight: bold;
+    }
+</style>
